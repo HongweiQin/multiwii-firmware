@@ -144,6 +144,9 @@ void configureReceiver() {
 #endif
 
   // port change Interrupt
+  // This is a "Pin Change Interrupt" handler, see "http://gammon.com.au/interrupts" and search for "Pin change interrupts" for more information.
+  // For Arduino Pro Mini, RX_PC_INTERRUPT==PCINT2_vect, which means that at least one pin in D0-D7 has changed.
+  // This interrupt handler modifies rcValue[], make it updated. Note that rcValue[] was declaired as a volatile array.
   ISR(RX_PC_INTERRUPT) { //this ISR is common to every receiver channel, it is call everytime a change state occurs on a RX input pin
     uint8_t mask;
     uint8_t pin;
@@ -470,6 +473,7 @@ void computeRC() {
     if (rc4ValuesIndex == AVERAGING_ARRAY_LENGTH-1) rc4ValuesIndex = 0;
     for (chan = 0; chan < RC_CHANS; chan++) {
       rcDataTmp = readRawRC(chan);
+	//After readRawRC(), the RC data is updated in the rcData[channel]
       #if defined(FAILSAFE)
         failsafeGoodCondition = rcDataTmp>FAILSAFE_DETECT_TRESHOLD || chan > 3 || !f.ARMED; // update controls channel only if pulse is above FAILSAFE_DETECT_TRESHOLD
       #endif                                                                                // In disarmed state allow always update for easer configuration.
@@ -483,7 +487,7 @@ void computeRC() {
           if ( rcDataMean < (uint16_t)rcData[chan] -3)  rcData[chan] = rcDataMean+2;
           if ( rcDataMean > (uint16_t)rcData[chan] +3)  rcData[chan] = rcDataMean-2;
           rcData4Values[chan][rc4ValuesIndex] = rcDataTmp;
-        }
+        }//QHWNOTE: A filter! Make sure rcData won't change too fast. if it slightly changed, it won't change.
       #endif
       if (chan<8 && rcSerialCount > 0) { // rcData comes from MSP and overrides RX Data until rcSerialCount reaches 0
         rcSerialCount --;

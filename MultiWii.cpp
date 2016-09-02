@@ -887,7 +887,8 @@ void loop () {
     // end of failsafe routine - next change is made with RcOptions setting
 
     // ------------------ STICKS COMMAND HANDLER --------------------
-    // checking sticks positions
+    // checking sticks positions for command combos, and compute rcDelayCommand
+    // it's used to devide whether we should arm or disarm the flight.
     uint8_t stTmp = 0;
     for(i=0;i<4;i++) {
       stTmp >>= 2;
@@ -1010,7 +1011,8 @@ void loop () {
           #endif
         }
       }
-    }
+    }//end of stick command handler
+    
     #if defined(LED_FLASHER)
       led_flasher_autoselect_sequence();
     #endif
@@ -1045,6 +1047,7 @@ void loop () {
     for(i=0;i<4;i++)
       auxState |= (rcData[AUX1+i]<1300)<<(3*i) | (1300<rcData[AUX1+i] && rcData[AUX1+i]<1700)<<(3*i+1) | (rcData[AUX1+i]>1700)<<(3*i+2);
     #endif
+	//QHW:auxState depicts aux channels' states
 
     for(i=0;i<CHECKBOXITEMS;i++)
       rcOptions[i] = (auxState & conf.activate[i])>0;
